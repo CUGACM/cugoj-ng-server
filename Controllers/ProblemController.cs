@@ -37,7 +37,7 @@ namespace cugoj_ng_server.Controllers
         }
 
         [HttpGet]
-        [Route("List/{page}")]
+        [Route("List/{page:int:min(1)}")]
         public async Task<object> GetProblemListAsync(int page)
         {
             if (page <= 0) return BadRequest();
@@ -52,7 +52,7 @@ namespace cugoj_ng_server.Controllers
         }
 
         [HttpGet]
-        [Route("{pid}")]
+        [Route("{pid:int}")]
         public async Task<IActionResult> GetProblemAsync(int pid)
         {
             bool viewAll = await UserModel.Authorization.CanViewAllProblemsAsync(HttpContext.Session.GetString("user"));
@@ -66,7 +66,7 @@ namespace cugoj_ng_server.Controllers
 
         [RequestSizeLimit(1 << 20)]
         [HttpPost]
-        [Route("Submit/{pid}")]
+        [Route("{pid:int}/Submit")]
         public async Task<IActionResult> SubmitSolutionAsync(int pid, [FromForm] string lang, [FromForm] string code)
         {
             var user = HttpContext.Session.GetString("user");

@@ -42,6 +42,7 @@ namespace cugoj_ng_server
                 opt.Cookie.IsEssential = true;
                 opt.IdleTimeout = TimeSpan.FromMinutes(sessionTimeout);
             });
+            Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
             Utilities.Inject.SetPropertiesByType(typeof(Models.DbConn), null, new()
             {
                 { typeof(IConnectionMultiplexer), ConnectionMultiplexer.Connect(redisConnstr) },
@@ -50,7 +51,7 @@ namespace cugoj_ng_server
             services.AddControllers().AddJsonOptions(opt =>
             {
                 opt.JsonSerializerOptions.IncludeFields = true;
-            }); 
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
