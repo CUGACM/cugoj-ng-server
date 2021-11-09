@@ -1,26 +1,54 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using cugoj_ng_server.Utilities;
+using StackExchange.Redis;
+using System.Data;
 
-namespace cugoj_ng_server
+var builder = WebApplication.CreateBuilder(args);
+
+var env = builder.Environment;
+var services = builder.Services;
+var configuration = builder.Configuration;
+
+// Add services to the container.
+var redisConnstr = configuration.GetConnectionString("redis");
+var mysqlConnstr = configuration.GetConnectionString("mysql");
+var sessionTimeout = configuration.GetValue<int>("Config:SessionTimeout");
+
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
+services.AddStackExchangeRedisCache(opt =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+    opt.Configuration = redisConnstr;
+    opt.InstanceName = "CUGOJ$";
+});
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
-}
+services.AddSession(opt =>
+{
+    opt.Cookie.Name = "_SESSION";
+    opt.Cookie.IsEssential = true;
+    opt.IdleTimeout = TimeSpan.FromMinutes(sessionTimeout);
+});
+
+Inject.SetPropertiesByType<cugoj_ng_server.Models.DbConn>(new()
+{
+    { typeof(IConnectionMultiplexer), ConnectionMultiplexer.Connect(redisConnstr) },
+    { typeof(Func<IDbConnection>), new Func<IDbConnection>(() => new MySql.Data.MySqlClient.MySqlConnection(mysqlConnstr)) },
+});
+
+services.AddControllers().AddJsonOptions(opt =>
+{
+    opt.JsonSerializerOptions.IncludeFields = true;
+});
+
+// Configure the HTTP request pipeline.
+var app = builder.Build();
+
+if (env.IsDevelopment())
+    app.UseDeveloperExceptionPage();
+
+app.UseRouting();
+
+app.UseSession();
+
+app.MapControllers();
+
+app.Run();

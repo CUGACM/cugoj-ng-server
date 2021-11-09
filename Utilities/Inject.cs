@@ -11,7 +11,7 @@ namespace cugoj_ng_server.Utilities
     {
         const BindingFlags bindingAttr = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        public static void SetPropertiesByType(Type type, object obj, Dictionary<Type, object> rules, BindingFlags bindingFlags = bindingAttr)
+        public static void SetProperties(Type type, object obj, Dictionary<Type, object> rules, BindingFlags bindingFlags = bindingAttr)
         {
             Array.ForEach(type.GetProperties(bindingFlags), propInfo =>
             {
@@ -19,5 +19,11 @@ namespace cugoj_ng_server.Utilities
                     propInfo.SetValue(obj, propValue);
             });
         }
+        public static void SetProperties<T>(T obj, Dictionary<Type, object> rules, BindingFlags bindingFlags = bindingAttr) =>
+            SetProperties(typeof(T), obj, rules, bindingFlags);
+
+        public static void SetPropertiesByType<T>(Dictionary<Type, object> rules, BindingFlags bindingFlags = bindingAttr) =>
+            SetProperties(typeof(T), null, rules, bindingFlags);
+
     }
 }
